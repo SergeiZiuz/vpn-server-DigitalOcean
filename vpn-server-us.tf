@@ -4,7 +4,7 @@ data "digitalocean_vpc" "nyc3-vpc" {
 }
 
 # Get ssh public key
-data "digitalocean_ssh_key" "ssh_name" {
+data "digitalocean_ssh_key" "ssh_key_name" {
   name = var.ssh_name
 }
 
@@ -15,15 +15,16 @@ resource "digitalocean_droplet" "vpn-server-us" {
   region = var.vpn_us_region
   size = var.vpn_us_size
   ssh_keys = [
-    data.digitalocean_sshkey.ssh_name.id
+    data.digitalocean_ssh_key.ssh_key_name.id
   ]
   vpc_uuid = data.digitalocean_vpc.nyc3-vpc.id
-  tags = var.vpn_us_teg
+  tags = [ var.vpn_us_teg ]
   
   connection {
     host = self.ipv4_address
     user = "root"
     type = "ssh"
+    agent = true
     private_key = file(var.pvt_key)
     timeout = "2m"
   }
@@ -35,6 +36,7 @@ resource "digitalocean_droplet" "vpn-server-us" {
   }
 
   provisioner "remote-exec" {
+    # script = "setup-droplet.sh"
     inline = [
       "chmod +x /tmp/setup-droplet.sh",
       "/tmp/setup-droplet.sh ${var.username}",

@@ -18,4 +18,4 @@ chown --recursive "${USERNAME}":"${USERNAME}" "${home_directory}/.ssh"
 
 # Disable root SSH login with password
 sed --in-place 's/^PermitRootLogin.*/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config
-if sshd -t -q; then systemctl restart sshd fi
+# if sshd -t -q; then systemctl restart sshd fi

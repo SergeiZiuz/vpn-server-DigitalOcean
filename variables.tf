@@ -24,9 +24,8 @@ variable "vpn_us_region" {
   description = "region of vm"
 }
 variable "vpn_us_teg" {
-  type = object({
-    Name = string
-  })
+  type = string
+  description = "teg"
 }
 
 variable "username" {

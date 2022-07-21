@@ -2,6 +2,7 @@
 .terraform
 .terraform.*
 *.out
-.tfstate
-.tfstate.backup
-*tfvars
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfplan

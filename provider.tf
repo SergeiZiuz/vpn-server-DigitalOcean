@@ -3,8 +3,8 @@ terraform {
   required_version = "~> 1.2.5"
   required_providers {
     digitalocean = {
-        sousource = "digitalocean/digitalocean"
-        versiversion = "~> 2.0"
+        source = "digitalocean/digitalocean"
+        version = "~> 2.0"
     }
   }
 }

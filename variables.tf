@@ -6,6 +6,11 @@ variable "ssh_name" {
   description = "name of ssh key"
 }
 
+variable "vpc_name" {
+  type = string
+  description = "Name of VPC"
+}
+
 # Describe Instanse
 variable "vpn_us_name" {
   type = string
@@ -23,9 +28,9 @@ variable "vpn_us_region" {
   type = string
   description = "region of vm"
 }
-variable "vpn_us_teg" {
+variable "vpn_us_tag" {
   type = string
-  description = "teg"
+  description = "tag"
 }
 
 variable "username" {

@@ -1,6 +1,6 @@
 # Get VPC ID
 data "digitalocean_vpc" "nyc3-vpc" {
-  name = "nyc3-vpc"
+  name = var.vpc_name
 }
 
 # Get ssh public key
@@ -18,7 +18,7 @@ resource "digitalocean_droplet" "vpn-server-us" {
     data.digitalocean_ssh_key.ssh_key_name.id
   ]
   vpc_uuid = data.digitalocean_vpc.nyc3-vpc.id
-  tags = [ var.vpn_us_teg ]
+  tags = [ var.vpn_us_tag ]
   
   connection {
     host = self.ipv4_address

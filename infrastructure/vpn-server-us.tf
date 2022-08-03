@@ -39,7 +39,7 @@ resource "digitalocean_droplet" "vpn-server-us" {
     # script = "setup-droplet.sh"
     inline = [
       "chmod +x /tmp/setup-droplet.sh",
-      "/tmp/setup-droplet.sh ${var.username}",
+      "/tmp/setup-droplet.sh ${var.username} ${var.password}",
     ]
   }
 }

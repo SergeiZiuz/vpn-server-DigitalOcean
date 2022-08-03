@@ -37,3 +37,7 @@ variable "username" {
   type = string
   description = "Non root username"
 }
+variable "password" {
+  typpe = string
+  description = "provide hashed password"
+}

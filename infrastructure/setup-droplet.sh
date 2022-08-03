@@ -2,11 +2,12 @@
 set -euo pipefail
 
 USERNAME=$1 # sudo non-root username here
+PASSWORD=$2
 
 # Create user and immediately expire password to force a change on login
-useradd --create-home --shell "/bin/bash" --groups sudo "${USERNAME}"
-passwd --delete "${USERNAME}"
-chage --lastday 0 "${USERNAME}"
+useradd --create-home --shell "/bin/bash" --groups sudo "${USERNAME}" -p "${PASSWORD}"
+# passwd --delete "${USERNAME}"
+# chage --lastday 0 "${USERNAME}"
 
 # Create SSH directory for sudo user and move keys over
 home_directory="$(eval echo ~${USERNAME})"

@@ -1,24 +1,16 @@
-# Get VPC ID
-data "digitalocean_vpc" "nyc3-vpc" {
-  name = var.vpc_name
-}
-
-# Get ssh public key
-data "digitalocean_ssh_key" "ssh_key_name" {
-  name = var.ssh_name
-}
 
 # Create a Droplet (VPN-server)
-resource "digitalocean_droplet" "vpn-server-us" {
-  image = var.vpn_us_image
-  name = var.vpn_us_name
-  region = var.vpn_us_region
-  size = var.vpn_us_size
+resource "digitalocean_droplet" "vpn-server" {
+  image = var.instanse_image
+  name = var.name_vpn_server
+  region = var.instance_region
+  size = var.instanse_size
   ssh_keys = [
-    data.digitalocean_ssh_key.ssh_key_name.id
+    data.digitalocean_ssh_key.ssh_key_service.id,
+    data.digitalocean_ssh_key.ssh_key_person.id
   ]
-  vpc_uuid = data.digitalocean_vpc.nyc3-vpc.id
-  tags = [ var.vpn_us_tag ]
+  vpc_uuid = digitalocean_vpc.vpn_vpc.id
+  tags = [ var.instance_tag ]
   
   connection {
     host = self.ipv4_address
@@ -42,16 +34,4 @@ resource "digitalocean_droplet" "vpn-server-us" {
       "/tmp/setup-droplet.sh ${var.username} ${var.password}",
     ]
   }
-}
-
-# Get id of project VPN
-data "digitalocean_project" "VPN" {
-  name = "VPN"
-}
-
-resource "digitalocean_project_resources" "VPN" {
-  project = data.digitalocean_project.VPN.id
-  resources = [
-      digitalocean_droplet.vpn-server-us.urn
-  ]
 }

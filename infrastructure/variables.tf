@@ -1,43 +1,47 @@
-variable "do_token" {}  # DigitalOcean Personal Access Token
-variable "pvt_key" {}   # Privete key location
-
-variable "ssh_name" {
+# Description cross infrastructure
+variable "do_token" {}            # DigitalOcean Personal Access Token
+variable "pvt_key" {}             # Privete key location
+variable "ssh_key_service" {
   type = string
-  description = "name of ssh key"
+  description = "name of ssh key at DigitalOcean"
 }
-
-variable "vpc_name" {
+variable "ssh_key_person" {
   type = string
-  description = "Name of VPC"
+  description = "name of ssh key at DigitalOcean"
 }
-
-# Describe Instanse
-variable "vpn_us_name" {
+variable "instance_region" {
   type = string
-  description = "name of vm"
+  description = "Region of solutions"
 }
-variable "vpn_us_image" {
+variable "instanse_image" {
   type = string
   description = "image of vm"
 }
-variable "vpn_us_size" {
+variable "instanse_size" {
   type = string
-  description = "size of vm"
+  description = "Default size of instance"
 }
-variable "vpn_us_region" {
-  type = string
-  description = "region of vm"
-}
-variable "vpn_us_tag" {
+variable "instance_tag" {
   type = string
   description = "tag"
 }
-
 variable "username" {
   type = string
   description = "Non root username"
 }
 variable "password" {
-  typpe = string
+  type = string
   description = "provide hashed password"
+}
+
+# Describe vpn Instanse
+variable "name_vpn_server" {
+  type = string
+  description = "name of vm"
+}
+
+# Descrybe ca server
+variable "name_ca_server" {
+  type = string
+  description = "Name of ca-server"
 }

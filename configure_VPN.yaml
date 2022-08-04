@@ -1,0 +1,38 @@
+- name: Configure an OpenVPN Server 
+  hosts:
+    # VPN_SERVER
+    LOCAL_SERVER
+  
+  vars:
+    username: sergei
+
+  tasks:
+  - name: Installing OpenVPN and Easy-RSA
+    become: yes
+    apt:
+      name:
+      - easy-rsa
+      - openvpn
+      state: latest
+      update_cache: true
+
+  - name: Create directory Easy-RSA
+    file:
+      path: "/home/{{ username }}/easy-rsa"
+      state: directory
+      mode: '0700'
+      owner: "{{ username }}"
+      group: "{{ username }}"
+
+  - name: Create symbolic link
+    file:
+      src: '/usr/share/easy-rsa/{{ item }}'
+      dest: '/home/{{ username }}/easy-rsa/{{ item }}'
+      state: link
+    loop:
+    - easyrsa
+    - openssl-easyrsa.cnf
+    - vars.example
+    - x509-types
+
+    

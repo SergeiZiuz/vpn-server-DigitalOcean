@@ -1,0 +1,16 @@
+- name: Initial server setup
+  hosts: LOCAL_SERVER
+  become: yes
+
+  tasks:
+  - name: Update Upgrade
+    become: yes
+    apt:
+      update_cache: yes
+      upgrade: yes
+  - name: Setting up a Firewall
+    ufw:
+      rule: allow
+      name: OpenSSH
+      state: enabled
+  

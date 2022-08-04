@@ -1,0 +1,55 @@
+- name: Configure a CA
+  hosts: LOCAL_SERVER
+  # hosts: CA_SERVER
+  # become: yes
+
+  vars:
+    username: sergei
+
+  tasks:
+  - name: Installing Easy RSA
+    become: yes
+    apt:
+      name: easy-rsa
+      state: latest
+      update_cache: true
+
+  - name: Preparing a Public key infrastructure directory
+    file:
+      path: "/home/{{ username }}/easy-rsa"
+      state: directory
+      mode: '0700'
+      owner: "{{ username }}"
+      group: "{{ username }}"
+
+  - name: Create symbolic link
+    file:
+      src: '/usr/share/easy-rsa/{{ item }}'
+      dest: '/home/{{ username }}/easy-rsa/{{ item }}'
+      state: link
+    loop:
+    - easyrsa
+    - openssl-easyrsa.cnf
+    - vars.example
+    - x509-types
+
+  - name: initialize the PKI inside the easy-rsa directory
+    shell: |
+      cd /home/{{ username }}/easy-rsa
+      ./easyrsa init-pki
+      exit 0
+
+  - name: Creating a Certificate Authority
+    shell: |
+      cp "/home/{{ username }}/easy-rsa"
+      cp vars.example vars
+      sed -i 's/^.*EASYRSA_REQ_COUNTRY.*/set_var EASYRSA_REQ_COUNTRY      "US"/' vars
+      sed -i 's/^.*EASYRSA_REQ_PROVINCE.*/set_var EASYRSA_REQ_PROVINCE      "California"/' vars
+      sed -i 's/^.*EASYRSA_REQ_CITY.*/set_var EASYRSA_REQ_CITY      "San Francisco"/' vars
+      sed -i 's/^.*EASYRSA_REQ_ORG.*/set_var EASYRSA_REQ_ORG    "SBIT"/' vars
+      sed -i 's/^.*EASYRSA_REQ_EMAIL.*/set_var EASYRSA_REQ_EMAIL  "sergey_zyuzev@hotmail.com"/' vars
+      sed -i 's/^.*EASYRSA_REQ_OU.*/set_var EASYRSA_REQ_OU      "Community"/' vars
+      sed -i 's/^.*EASYRSA_ALGO.*/set_var EASYRSA_ALGO      "ec"/' vars
+      sed -i 's/^.*EASYRSA_DIGEST.*/set_var EASYRSA_DIGEST      "sha512"/' vars
+      ./easyrsa build-ca nopass
+      exit 0

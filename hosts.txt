@@ -1,0 +1,13 @@
+[CA_SERVER]
+#ca-server       ansible_host=
+
+[VPN_SERVER]
+#vpn-server      ansible_host=
+
+[LOCAL_SERVER]
+ubuntu          ansible_host=127.0.0.1
+
+[ALL_SERVERS:children]
+CA_SERVER
+VPN_SERVER
+LOCAL_SERVER

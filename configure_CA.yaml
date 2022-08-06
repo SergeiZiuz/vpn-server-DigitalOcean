@@ -5,6 +5,7 @@
 
   vars:
     username: sergei
+    # easy-rsa_path: "/home/sergei/easy-rsa"
 
   tasks:
   - name: Installing Easy RSA
@@ -34,15 +35,23 @@
     - x509-types
 
   - name: initialize the PKI inside the easy-rsa directory
-    shell: |
-      cd /home/{{ username }}/easy-rsa
-      ./easyrsa init-pki
-      exit 0
+    command: ./easyrsa init-pki
+    args:
+      chdir: '/home/{{ username }}/easy-rsa/'
+      creates: '/home/{{ username }}/easy-rsa/pki'
+
+  - name: Copy easy-rsa
+    copy:
+      src: '/home/{{ username }}/easy-rsa/vars.example'
+      dest: '/home/{{ username }}/easy-rsa/vars'
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0644'
+      remote_src: yes
 
   - name: Creating a Certificate Authority
     shell: |
-      cp "/home/{{ username }}/easy-rsa"
-      cp vars.example vars
+      cd "/home/{{ username }}/easy-rsa/"
       sed -i 's/^.*EASYRSA_REQ_COUNTRY.*/set_var EASYRSA_REQ_COUNTRY      "US"/' vars
       sed -i 's/^.*EASYRSA_REQ_PROVINCE.*/set_var EASYRSA_REQ_PROVINCE      "California"/' vars
       sed -i 's/^.*EASYRSA_REQ_CITY.*/set_var EASYRSA_REQ_CITY      "San Francisco"/' vars
@@ -51,5 +60,9 @@
       sed -i 's/^.*EASYRSA_REQ_OU.*/set_var EASYRSA_REQ_OU      "Community"/' vars
       sed -i 's/^.*EASYRSA_ALGO.*/set_var EASYRSA_ALGO      "ec"/' vars
       sed -i 's/^.*EASYRSA_DIGEST.*/set_var EASYRSA_DIGEST      "sha512"/' vars
-      ./easyrsa build-ca nopass
       exit 0
+
+  - name: create the root public and private key pair
+    command: ./easyrsa --batch build-ca nopass
+    args:
+      chdir: '/home/{{ username }}/easy-rsa/'

@@ -1,0 +1,71 @@
+- name: Configure an OpenVPN Server 
+  hosts:
+    VPN_SERVER
+  
+  vars:
+    username: sergei
+    # easy-rsa_path: /home/{{ username }}/easy-rsa
+
+  tasks:
+  - name: Installing OpenVPN and Easy-RSA
+    become: yes
+    apt:
+      name:
+      - easy-rsa
+      - openvpn
+      state: latest
+      update_cache: true
+
+  - name: Create directory Easy-RSA
+    file:
+      path: "/home/{{ username }}/easy-rsa/"
+      state: directory
+      mode: '0700'
+      owner: "{{ username }}"
+      group: "{{ username }}"
+
+  - name: Create symbolic link
+    file:
+      src: '/usr/share/easy-rsa/{{ item }}'
+      dest: '/home/{{ username }}/easy-rsa/{{ item }}'
+      state: link
+    loop:
+    - easyrsa
+    - openssl-easyrsa.cnf
+    - vars.example
+    - x509-types
+
+  - name: Copy easy-rsa
+    copy:
+      src: '/home/{{ username }}/easy-rsa/vars.example'
+      dest: '/home/{{ username }}/easy-rsa/vars'
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0644'
+      remote_src: yes
+
+  - name: Change vars
+    shell: |
+      cd "/home/{{ username }}/easy-rsa/"
+      sed -i 's/^.*EASYRSA_ALGO.*/set_var EASYRSA_ALGO      "ec"/' vars
+      sed -i 's/^.*EASYRSA_DIGEST.*/set_var EASYRSA_DIGEST      "sha512"/' vars
+      sed -i 's/^.*EASYRSA_REQ_CN.*/set_var EASYRSA_REQ_CN   "server"/' vars
+      exit 0
+
+  - name: initialize the PKI inside the easy-rsa directory
+    command: ./easyrsa init-pki
+    args:
+      chdir: '/home/{{ username }}/easy-rsa/'
+      creates: '/home/{{ username }}/easy-rsa/pki'
+
+  - name: generate a private key and Certificate Signing Request (CSR)
+    command: ./easyrsa --batch gen-req server nopass
+    args:
+      chdir: '/home/{{ username }}/easy-rsa/'
+      creates: '/home/{{ username }}/easy-rsa/pki/private/ca.key'
+
+  - name: Copy the server key
+    become: yes
+    command: cp '/home/{{ username }}/easy-rsa/pki/private/server.key' /etc/openvpn/server/
+
+    

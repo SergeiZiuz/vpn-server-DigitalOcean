@@ -1,0 +1,58 @@
+- name: Singing sertificates
+  hosts: ALL_SERVERS
+
+  tasks:
+  - name: Fetch certificate request from vpn-server
+    fetch:
+      src: /home/sergei/easy-rsa/pki/reqs/server.req
+      dest: buffer/
+      flat: yes
+    when: "{{ inventory_hostname == 'vpn-server' }}"
+  - name: Copy certificate to ca-server
+    copy:
+      src: buffer/server.req
+      dest: /tmp/
+    when: "{{ inventory_hostname == 'ca-server' }}"
+
+  - name: Import the sertificate request
+    command: ./easyrsa import-req /tmp/server.req server
+    args:
+      chdir: '/home/sergei/easy-rsa/'
+      creates: '/home/sergei/easy-rsa/pki/reqs/server.req'
+    when: "{{ inventory_hostname == 'ca-server' }}"
+  
+  - name: sing the request
+    command: ./easyrsa --batch sign-req server server
+    args:
+      chdir: '/home/sergei/easy-rsa/'
+      creates: '/home/sergei/easy-rsa/pki/issued/server.crt'
+    when: "{{ inventory_hostname == 'ca-server' }}"
+  
+  - name: Fetch certificates of vpn-server and ca-server
+    fetch:
+      src: "/home/sergei/easy-rsa/pki/{{ item }}"
+      dest: buffer/
+      flat: yes
+    loop:
+    - issued/server.crt
+    - ca.crt
+    when: "{{ inventory_hostname == 'ca-server' }}"
+  - name: Copy sertificates to vpn-server
+    copy:
+      src: "buffer/{{ item }}"
+      dest: /tmp/
+    loop:
+    - server.crt
+    - ca.crt
+    when: "{{ inventory_hostname == 'vpn-server' }}"
+
+  - name: Copy sertificates to OpenVPN
+    become: yes
+    copy:
+      src: "/tmp/{{ item }}"
+      dest: "/etc/openvpn/server/{{ item }}"
+      remote_src: yes
+    loop:
+    - server.crt
+    - ca.crt
+    when: "{{ inventory_hostname == 'vpn-server' }}"

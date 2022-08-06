@@ -1,7 +1,5 @@
 - name: Configure a CA
-  hosts: LOCAL_SERVER
-  # hosts: CA_SERVER
-  # become: yes
+  hosts: CA_SERVER
 
   vars:
     username: sergei

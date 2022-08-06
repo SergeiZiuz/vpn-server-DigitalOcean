@@ -1,7 +1,6 @@
 - name: Configure an OpenVPN Server 
   hosts:
-    # VPN_SERVER
-    LOCAL_SERVER
+    VPN_SERVER
   
   vars:
     username: sergei

@@ -1,2 +1,0 @@
-ansible_user: sergei
-ansible_ssh_private_key: ~/.ssh/digitalOcean

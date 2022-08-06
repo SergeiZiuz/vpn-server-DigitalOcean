@@ -1,13 +1,9 @@
 [CA_SERVER]
-#ca-server       ansible_host=
+ca-server       ansible_host=192.168.56.4
 
 [VPN_SERVER]
-#vpn-server      ansible_host=
-
-[LOCAL_SERVER]
-ubuntu          ansible_host=127.0.0.1
+vpn-server      ansible_host=192.168.56.5
 
 [ALL_SERVERS:children]
 CA_SERVER
 VPN_SERVER
-LOCAL_SERVER

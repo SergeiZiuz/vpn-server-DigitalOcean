@@ -14,6 +14,13 @@
       name: ufw
       state: latest
       update_cache: true
+  
+  - name: Enable firewall
+    become: yes
+    systemd:
+      name: ufw
+      state: started
+      enabled: yes
       
   - name: Setting up a Firewall
     become: yes
@@ -21,4 +28,3 @@
       rule: allow
       name: OpenSSH
       state: enabled
-  

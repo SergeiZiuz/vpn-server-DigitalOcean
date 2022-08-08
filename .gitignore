@@ -9,3 +9,6 @@
 
 # Ansible
 buffer
+client_configs
+
+# VPN

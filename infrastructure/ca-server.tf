@@ -31,11 +31,4 @@ resource "digitalocean_droplet" "ca-server" {
       "/tmp/setup-droplet.sh ${var.username} ${var.password}"
     ]
   }
-#   # Setting up a firewall
-#   provisioner "remote-exec" {
-#     inline = [
-#         "ufw allow OpenSSH",
-#         "ufw enable -y"
-#     ]
-#   }
 }

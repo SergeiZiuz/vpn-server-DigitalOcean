@@ -1,0 +1,1 @@
+client_configs_dir: "/home/{{ username }}/client-configs"

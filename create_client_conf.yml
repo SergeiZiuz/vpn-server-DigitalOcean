@@ -1,66 +1,45 @@
+---
 - name: Creating the Client Configuration Infrastructure
   hosts: VPN_SERVER
 
   tasks:
   - name: create directory
     file:
-      path: /home/sergei/client-configs/files/
+      path: "{{ client_configs_dir }}/files/"
       state: directory
-      owner: 'sergei'
-      group: 'sergei'
+      owner: '{{ username }}'
+      group: '{{ username }}'
       mode: '0700'
 
   - name: Copy base config
     copy:
       src: base.conf
-      dest: /home/sergei/client-configs/
-      owner: 'sergei'
-      group: 'sergei'
+      dest: "{{ client_configs_dir }}/"
+      owner: '{{ username }}'
+      group: '{{ username }}'
       mode: '0600'
   
   - name: edit base conf
-    command: sed -i 's/your_server_ip/{{ ansible_default_ipv4.address }}/' /home/sergei/client-configs/base.conf
+    command: sed -i 's/your_server_ip/{{ ansible_default_ipv4.address }}/' {{ client_configs_dir }}/base.conf
   
   - name: Copy make script
     copy:
       src: make_config.sh
-      dest: /home/sergei/client-configs/
-      owner: 'sergei'
-      group: 'sergei'
+      dest: "{{ client_configs_dir }}/"
+      owner: '{{ username }}'
+      group: '{{ username }}'
       mode: '0700'
   
   - name: generate client configuration
     command: './make_config.sh {{ item }}'
     args:
-      chdir: /home/sergei/client-configs/
-      creates: '/home/sergei/client-configs/files/{{ item }}.ovpn'
-    loop:
-    - HomeRouter
-    - MacbookPro
-    - edgeServer
-    - iPhone12Sergei
-    - iPhone7
-    - iPhone5s
-    - iPadAir
-    - iPhone8Sasha
-    - iPhone12Sasha
-    - iPhoneZhenay
-    - iPhoneIrina
+      chdir: "{{ client_configs_dir }}/"
+      creates: '{{ client_configs_dir }}/files/{{ item }}.ovpn'
+    loop: "{{ clients }}"
 
   - name: Fetch clients configs
     fetch:
-      src: '/home/sergei/client-configs/files/{{ item }}.ovpn'
+      src: '{{ client_configs_dir }}/files/{{ item }}.ovpn'
       dest: client_configs/
       flat: yes
-    loop:
-    - HomeRouter
-    - MacbookPro
-    - edgeServer
-    - iPhone12Sergei
-    - iPhone7
-    - iPhone5s
-    - iPadAir
-    - iPhone8Sasha
-    - iPhone12Sasha
-    - iPhoneZhenay
-    - iPhoneIrina
+    loop: "{{ clients }}"

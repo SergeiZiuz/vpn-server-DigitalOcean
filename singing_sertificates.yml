@@ -7,26 +7,26 @@
       src: /home/sergei/easy-rsa/pki/reqs/server.req
       dest: buffer/
       flat: yes
-    when: "{{ inventory_hostname == 'vpn-server' }}"
+    when: ansible_hostname == "vpn-server"
   - name: Copy certificate to ca-server
     copy:
       src: buffer/server.req
       dest: /tmp/
-    when: "{{ inventory_hostname == 'ca-server' }}"
+    when: ansible_hostname == "ca-server"
 
   - name: Import the sertificate request
     command: ./easyrsa import-req /tmp/server.req server
     args:
       chdir: '/home/sergei/easy-rsa/'
       creates: '/home/sergei/easy-rsa/pki/reqs/server.req'
-    when: "{{ inventory_hostname == 'ca-server' }}"
+    when: ansible_hostname == "ca-server"
   
   - name: sing the request
     command: ./easyrsa --batch sign-req server server
     args:
       chdir: '/home/sergei/easy-rsa/'
       creates: '/home/sergei/easy-rsa/pki/issued/server.crt'
-    when: "{{ inventory_hostname == 'ca-server' }}"
+    when: ansible_hostname == "ca-server"
   
   - name: Fetch certificates of vpn-server and ca-server
     fetch:
@@ -36,7 +36,7 @@
     loop:
     - issued/server.crt
     - ca.crt
-    when: "{{ inventory_hostname == 'ca-server' }}"
+    when: ansible_hostname == "ca-server"
   - name: Copy sertificates to vpn-server
     copy:
       src: "buffer/{{ item }}"
@@ -44,7 +44,7 @@
     loop:
     - server.crt
     - ca.crt
-    when: "{{ inventory_hostname == 'vpn-server' }}"
+    when: ansible_hostname == "vpn-server"
 
   - name: Copy sertificates to OpenVPN
     become: yes
@@ -55,4 +55,220 @@
     loop:
     - server.crt
     - ca.crt
-    when: "{{ inventory_hostname == 'vpn-server' }}"
+    when: ansible_hostname == "vpn-server"
+
+  - name: Generate the tls-crypt
+    command: openvpn --genkey secret ta.key
+    args:
+      chdir: '/home/sergei/easy-rsa/'
+      creates: '/home/sergei/easy-rsa/ta.key'
+    when: ansible_hostname == "vpn-server"
+  
+  - name: Copy tls-crypt key
+    become: yes
+    copy:
+      src: '/home/sergei/easy-rsa/ta.key'
+      dest: '/etc/openvpn/server/'
+      remote_src: yes
+    when: ansible_hostname == "vpn-server"
+
+  - name: Create directory to store client certificate and key
+    file:
+      path: '/home/sergei/client-configs/keys'
+      state: directory
+      mode: '0700'
+      owner: 'sergei'
+      group: 'sergei'
+    when: ansible_hostname == "vpn-server"
+
+  - name: Generate keys and requests to clients
+    command: ./easyrsa --batch gen-req {{ item }} nopass
+    args:
+      chdir: '/home/sergei/easy-rsa/'
+      creates: '/home/sergei/easy-rsa/pki/private/{{ item }}.key'
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "vpn-server"
+
+  - name: Copy client keys to client-config keys
+    copy:
+      src: '/home/sergei/easy-rsa/pki/private/{{ item }}.key'
+      dest: '/home/sergei/client-configs/keys/'
+      owner: 'sergei'
+      group: 'sergei'
+      remote_src: yes
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "vpn-server"
+  
+  - name: Fetch request keys from vpn-server then copy to ca-server
+    fetch: 
+      src: '/home/sergei/easy-rsa/pki/reqs/{{ item }}.req'
+      dest: buffer/
+      flat: yes
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "vpn-server"
+
+  - name: Copy keys to ca-server
+    copy:
+      src: 'buffer/{{ item }}.req'
+      dest: /tmp/
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "ca-server"
+  
+  - name: Import the certificate requests
+    command: ./easyrsa import-req /tmp/{{ item }}.req {{ item }}
+    args:
+      chdir: '/home/sergei/easy-rsa/'
+      creates: '/home/sergei/easy-rsa/pki/reqs/{{ item }}.req'
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "ca-server"
+
+  - name: sing the requests
+    command: './easyrsa --batch sign-req client {{ item }}'
+    args:
+      chdir: '/home/sergei/easy-rsa/'
+      creates: '/home/sergei/easy-rsa/pki/issued/{{ item }}.crt'
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "ca-server"
+
+  - name: Fetch certificates of clients
+    fetch:
+      src: "/home/sergei/easy-rsa/pki/issued/{{ item }}.crt"
+      dest: buffer/
+      flat: yes
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "ca-server"
+
+  - name: Copy client sertificates to vpn-server
+    copy:
+      src: "buffer/{{ item }}.crt"
+      dest: /tmp/
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "vpn-server"
+
+  - name: copy to client config
+    copy:
+      src: '/tmp/{{ item }}.crt'
+      dest: '/home/sergei/client-configs/keys/'
+      owner: 'sergei'
+      group: 'sergei'
+      remote_src: yes
+    loop:
+    - HomeRouter
+    - MacbookPro
+    - edgeServer
+    - iPhone12Sergei
+    - iPhone7
+    - iPhone5s
+    - iPadAir
+    - iPhone8Sasha
+    - iPhone12Sasha
+    - iPhoneZhenay
+    - iPhoneIrina
+    when: ansible_hostname == "vpn-server"
+
+  - name: Copy ta to client configs
+    copy:
+      src: '/home/sergei/easy-rsa/ta.key'
+      dest: '/home/sergei/client-configs/keys/'
+      owner: 'sergei'
+      group: 'sergei'
+      remote_src: yes
+    when: ansible_hostname == "vpn-server"
+
+  - name: Copy ca cert to client configs
+    become: yes
+    copy:
+      src: '/etc/openvpn/server/ca.crt'
+      dest: '/home/sergei/client-configs/keys/'
+      owner: 'sergei'
+      group: 'sergei'
+      remote_src: yes
+    when: ansible_hostname == "vpn-server"

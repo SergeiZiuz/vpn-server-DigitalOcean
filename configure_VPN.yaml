@@ -1,6 +1,5 @@
 - name: Configure an OpenVPN Server 
-  hosts:
-    VPN_SERVER
+  hosts: VPN_SERVER
   
   vars:
     username: sergei
@@ -66,6 +65,56 @@
 
   - name: Copy the server key
     become: yes
-    command: cp '/home/{{ username }}/easy-rsa/pki/private/server.key' /etc/openvpn/server/
+    copy: 
+      src: '/home/{{ username }}/easy-rsa/pki/private/server.key'
+      dest: /etc/openvpn/server/
+      remote_src: yes
 
-    
+  - name: Copy semple server config
+    become: yes
+    copy:
+      src: server.conf
+      dest: /etc/openvpn/server/
+      owner: 'root'
+      group: 'root'
+      mode: '0644'
+  
+  - name: Allow packet forwarding for IPv4
+    become: yes
+    command: sed -i 's/^.*net.ipv4.ip_forward=1.*/#net.ipv4.ip_forward=1/' /etc/sysctl.conf
+
+  - name: Run command and parse
+    shell: "ip route list default | awk -F ' ' '{ print $5 }'"
+    register: dev
+
+  - name: Add firewall configuration
+    become: yes
+    shell: |
+      sed -i '11s/^/# START OPENVPN RULES \
+      # NAT table rules \
+      \*nat \
+      \:POSTROUTING ACCEPT [0\:0] \
+      # Allow traffic from OpenVPN client to {{ dev.stdout }} (change to the interface you discovered!) \
+      -A POSTROUTING -s 10.8.0.0\/8 -o {{ dev.stdout }} -j MASQUERADE \
+      COMMIT \
+      # END OPENVPN RULES \n\n/' /etc/ufw/before.rules
+      exit 0
+
+  - name: allow forwarded packets by default 
+    become: yes
+    command: sed -i 's/^DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+
+  - name: Setting up a Firewall
+    become: yes
+    ufw:
+      rule: allow
+      port: '1194'
+      proto: udp
+      state: enabled
+
+  - name: Start the open vpn server
+    become: yes
+    systemd:
+      name: openvpn
+      state: started
+      enabled: yes

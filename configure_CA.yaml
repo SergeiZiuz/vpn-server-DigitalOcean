@@ -1,55 +1,11 @@
+---
 - name: Configure a CA
   hosts: CA_SERVER
 
-  vars:
-    username: sergei
-    # easy-rsa_path: "/home/sergei/easy-rsa"
-
   tasks:
-  - name: Installing Easy RSA
-    become: yes
-    apt:
-      name: easy-rsa
-      state: latest
-      update_cache: true
-
-  - name: Preparing a Public key infrastructure directory
-    file:
-      path: "/home/{{ username }}/easy-rsa"
-      state: directory
-      mode: '0700'
-      owner: "{{ username }}"
-      group: "{{ username }}"
-
-  - name: Create symbolic link
-    file:
-      src: '/usr/share/easy-rsa/{{ item }}'
-      dest: '/home/{{ username }}/easy-rsa/{{ item }}'
-      state: link
-    loop:
-    - easyrsa
-    - openssl-easyrsa.cnf
-    - vars.example
-    - x509-types
-
-  - name: initialize the PKI inside the easy-rsa directory
-    command: ./easyrsa init-pki
-    args:
-      chdir: '/home/{{ username }}/easy-rsa/'
-      creates: '/home/{{ username }}/easy-rsa/pki'
-
-  - name: Copy easy-rsa
-    copy:
-      src: '/home/{{ username }}/easy-rsa/vars.example'
-      dest: '/home/{{ username }}/easy-rsa/vars'
-      owner: "{{ username }}"
-      group: "{{ username }}"
-      mode: '0644'
-      remote_src: yes
-
   - name: Creating a Certificate Authority
     shell: |
-      cd "/home/{{ username }}/easy-rsa/"
+      cd "{{ easyrsa_dir }}/"
       sed -i 's/^.*EASYRSA_REQ_COUNTRY.*/set_var EASYRSA_REQ_COUNTRY      "US"/' vars
       sed -i 's/^.*EASYRSA_REQ_PROVINCE.*/set_var EASYRSA_REQ_PROVINCE      "California"/' vars
       sed -i 's/^.*EASYRSA_REQ_CITY.*/set_var EASYRSA_REQ_CITY      "San Francisco"/' vars
@@ -63,4 +19,5 @@
   - name: create the root public and private key pair
     command: ./easyrsa --batch build-ca nopass
     args:
-      chdir: '/home/{{ username }}/easy-rsa/'
+      chdir: '{{ easyrsa_dir }}/'
+      creates: "{{ easyrsa_dir }}/pki/private/ca.key"

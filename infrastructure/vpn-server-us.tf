@@ -9,7 +9,7 @@ resource "digitalocean_droplet" "vpn-server" {
     data.digitalocean_ssh_key.ssh_key_service.id,
     data.digitalocean_ssh_key.ssh_key_person.id
   ]
-  vpc_uuid = digitalocean_vpc.vpn_vpc.id
+  vpc_uuid = digitalocean_vpc.vpn-vpc.id
   tags = [ var.instance_tag ]
   
   connection {
@@ -33,5 +33,12 @@ resource "digitalocean_droplet" "vpn-server" {
       "chmod +x /tmp/setup-droplet.sh",
       "/tmp/setup-droplet.sh ${var.username} ${var.password}",
     ]
+  }
+
+  provisioner "local-exec" {
+    command = "sed -i '' 's/vpn-ip/${self.ipv4_address}/' ../hosts.txt"
+  }
+  provisioner "local-exec" {
+    command = "sed -i '' 's/usern/${var.username}/' ../group_vars/ALL_SERVERS"
   }
 }
